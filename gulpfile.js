@@ -5,7 +5,8 @@ var reload = browserSync.reload;
 var autoprefixer = require('gulp-autoprefixer');
 var clean = require('gulp-clean');
 var concat = require('gulp-concat');
-
+var browserify = require('gulp-browserify');
+var merge = require('merge-stream');
 var SOURCEPATH = {
     sassSource: 'src/scss/*.scss',
     htmlSource: 'src/*.html',
@@ -29,15 +30,20 @@ gulp.task('clean-scripts', function(){
 })
 // outputStyle Options - expanded, nested, compressed, compact
 gulp.task('sass', function () {
-    gulp.src(SOURCEPATH.sassSource)
+    var bootstrapCSS = gulp.src('./node_modules/bootstrap/dist/css/bootstrap.css');
+    var sassFiles =   gulp.src(SOURCEPATH.sassSource)
         .pipe(autoprefixer())
         .pipe(sass({ outputStyle: 'expanded' }).on('error', sass.logError))
+
+        merge (bootstrapCSS, sassFiles) //Order Matters - Later ones will override the previous ones
+        .pipe(concat('app.css'))
         .pipe(gulp.dest(APPPATH.css));
 });
 
 gulp.task('copy-scripts',['clean-scripts'], function(){
     gulp.src(SOURCEPATH.jsSource)
         .pipe(concat('main.js'))
+        .pipe(browserify())
         .pipe(gulp.dest(APPPATH.js));
 });
 
